@@ -12,15 +12,14 @@ namespace FlightMonitor.Services
             await context.SaveChangesAsync();
         }
 
-        public Task UpdatePrice(string flightNumber, decimal newPrice)
+        public async Task UpdatePrice(string flightNumber, decimal newPrice)
         {
-            var flight = context.Flights.Find(flightNumber);
+            var flight = await context.Flights.FindAsync(flightNumber);
             if (flight != null)
             {
                 flight.Price = newPrice;
-                return context.SaveChangesAsync();
+                await context.SaveChangesAsync();
             }
-            return Task.CompletedTask;
         }
 
         public async Task<IEnumerable<Flight>> GetFlightsBelowThreshold(decimal threshold)

@@ -7,15 +7,21 @@ using Assert = Xunit.Assert;
 
 namespace FlightMonitor.Tests.Controllers
 {
-    public class FlightMonitorServiceTests : IClassFixture<FlightFixtures>
+    public sealed class FlightMonitorServiceTests : IDisposable
     {
         private readonly FlightContext _context;
         private readonly FlightMonitorService _sut;
+        private readonly FlightFixtures _fixture;
 
-        public FlightMonitorServiceTests(FlightFixtures fixture)
+        public FlightMonitorServiceTests()
         {
-            _context = fixture.DbContext;
+            _fixture = new FlightFixtures();
+            _context = _fixture.DbContext;
             _sut = new FlightMonitorService(_context);
+        }
+        public void Dispose()
+        {
+            _fixture.Dispose();
         }
 
         [Fact]
@@ -65,8 +71,7 @@ namespace FlightMonitor.Tests.Controllers
         public async Task GetFlightsBelowThreshold_ReturnsCorrectFlights_BelowThreshold()
         {
             //Arrange
-            var threshold = 300m;
-            await SeedFlights();
+            var threshold = 350m;
 
             // Act
             var results = await _sut.GetFlightsBelowThreshold(threshold);
@@ -79,29 +84,12 @@ namespace FlightMonitor.Tests.Controllers
         [Fact]
         public async Task GetCheapestFlight_ReturnsCheapestFlight_WithGivenOriginAndDestination()
         {
-            // Arrange
-            await SeedFlights();
-
             // Act
             var result = await _sut.GetCheapestFlight("MAN", "JFK");
             // Assert
             Assert.NotNull(result);
             Assert.Equal("BA300", result!.FlightNumber);
             Assert.Equal(399.99m, result.Price);
-        }
-
-        private async Task SeedFlights()
-        {
-            var flights = new List<Flight>
-            {
-                new() { FlightNumber = "BA100", Origin = "LHR", Destination = "JFK", Price = 299.99m, DepartureDate = new DateTime(2026, 6, 1, 0, 0, 0, DateTimeKind.Utc) },
-                new() { FlightNumber = "BA200", Origin = "LHR", Destination = "CDG", Price = 149.99m, DepartureDate = new DateTime(2026, 6, 2, 0, 0, 0, DateTimeKind.Utc) },
-                new() { FlightNumber = "BA300", Origin = "MAN", Destination = "JFK", Price = 399.99m, DepartureDate = new DateTime(2026, 6, 3, 0, 0, 0, DateTimeKind.Utc) },
-                new() { FlightNumber = "BA400", Origin = "MAN", Destination = "JFK", Price = 999.99m, DepartureDate = new DateTime(2026, 6, 3, 0, 0, 0, DateTimeKind.Utc) }
-            };
-
-            await _context.Flights.AddRangeAsync(flights);
-            await _context.SaveChangesAsync();
         }
     }
 }
